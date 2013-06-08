@@ -69,7 +69,7 @@ sudo chmod -R u+rwX  tmp/pids/
 sudo -u git -H cp config/unicorn.rb.example config/unicorn.rb
 
 # Configure GitLab DB settings
-cat <<EOF | sudo -u git tee config/database.yml
+cat <<EOF | sudo -u git tee config/database.yml > /dev/null
 #
 # PRODUCTION
 #
@@ -91,6 +91,7 @@ sudo -u git -H bundle install --deployment --without development test postgres
 
 # Initialise Database and Activate Advanced Features
 sudo -u git -H bundle exec rake gitlab:setup RAILS_ENV=production
+sudo -u git -H bundle exec rake db:migrate RAILS_ENV=production
 # Install Init Script
 sudo curl --output /etc/init.d/gitlab https://raw.github.com/gitlabhq/gitlab-recipes/5-0-stable/init.d/gitlab
 sudo chmod +x /etc/init.d/gitlab
@@ -104,7 +105,7 @@ sudo service gitlab start
 
 # Nginx settings
 sudo apt-get install -y nginx
-cat <<EOF | sudo tee /etc/nginx/sites-available/gitlab
+cat <<EOF | sudo tee /etc/nginx/sites-available/gitlab > /dev/null
 # GITLAB
 # Maintainer: @randx
 # App Version: 5.0
@@ -137,9 +138,9 @@ server {
     proxy_connect_timeout 300; # https://github.com/gitlabhq/gitlabhq/issues/694
     proxy_redirect     off;
 
-    proxy_set_header   X-Forwarded-Proto $scheme;
-    proxy_set_header   Host              $http_host;
-    proxy_set_header   X-Real-IP         $remote_addr;
+    proxy_set_header   X-Forwarded-Proto \$scheme;
+    proxy_set_header   Host              \$http_host;
+    proxy_set_header   X-Real-IP         \$remote_addr;
 
     proxy_pass http://gitlab;
   }
