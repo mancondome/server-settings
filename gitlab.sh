@@ -69,7 +69,20 @@ sudo chmod -R u+rwX  tmp/pids/
 sudo -u git -H cp config/unicorn.rb.example config/unicorn.rb
 
 # Configure GitLab DB settings
-sudo -u git cp config/database.yml.mysql config/database.yml
+cat <<EOF | sudo -u git tee config/database.yml
+#
+# PRODUCTION
+#
+production:
+  adapter: mysql2
+  encoding: utf8
+  reconnect: false
+  database: gitlabhq_production
+  pool: 5
+  username: gitlab
+  password: "$MYSQL_GITLAB_PASSWORD"
+EOF
+sudo chmod 600 config/database.yml
 
 # Install Gems
 cd /home/git/gitlab
@@ -91,6 +104,48 @@ sudo service gitlab start
 
 # Nginx settings
 sudo apt-get install -y nginx
-sudo curl --output /etc/nginx/sites-available/gitlab https://raw.github.com/gitlabhq/gitlab-recipes/5-0-stable/nginx/gitlab
+cat <<EOF | sudo tee /etc/nginx/sites-available/gitlab
+# GITLAB
+# Maintainer: @randx
+# App Version: 5.0
+
+upstream gitlab {
+  server unix:/home/git/gitlab/tmp/sockets/gitlab.socket;
+}
+
+server {
+  listen `wget -q -O - ipcheck.ieserver.net`:80 default_server;
+  server_name `hostname -f`;
+  root /home/git/gitlab/public;
+
+  # individual nginx logs for this gitlab vhost
+  access_log  /var/log/nginx/gitlab_access.log;
+  access_log  /var/log/nginx/gitlab_access.log;
+  access_log  /var/log/nginx/gitlab_access.log;
+  error_log   /var/log/nginx/gitlab_error.log;
+
+  location / {
+    # serve static files from defined root folder;.
+    # @gitlab is a named location for the upstream fallback, see below
+    try_files $uri $uri/index.html $uri.html @gitlab;
+  }
+
+  # if a file, which is not found in the root folder is requested,
+  # then the proxy pass the request to the upsteam (gitlab unicorn)
+  location @gitlab {
+    proxy_read_timeout 300; # https://github.com/gitlabhq/gitlabhq/issues/694
+    proxy_connect_timeout 300; # https://github.com/gitlabhq/gitlabhq/issues/694
+    proxy_redirect     off;
+
+    proxy_set_header   X-Forwarded-Proto $scheme;
+    proxy_set_header   Host              $http_host;
+    proxy_set_header   X-Real-IP         $remote_addr;
+
+    proxy_pass http://gitlab;
+  }
+}
+EOF
+
+# sudo curl --output /etc/nginx/sites-available/gitlab https://raw.github.com/gitlabhq/gitlab-recipes/5-0-stable/nginx/gitlab
 sudo ln -s /etc/nginx/sites-available/gitlab /etc/nginx/sites-enabled/gitlab
 sudo service nginx restart
