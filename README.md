@@ -3,11 +3,13 @@ Overview
 
 サーバー構築用スクリプトを置く。
 
-利用方法を検討中。
+利用方法。
 ```
-wget -q -O - https://raw.github.com/mancondome/server-settings/master/init.sh | sh -c
+wget https://raw.github.com/mancondome/server-settings/master/init.sh
+sh init.sh
 ```
 
 * init.sh
-** ログインユーザーにsudo権限を与える。
-** Gitをインストールする。
+- ログインユーザーにsudo権限を与える。
+* gitlab.sh
+- gitlabをインストールする。
