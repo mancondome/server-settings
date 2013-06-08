@@ -91,7 +91,6 @@ sudo -u git -H bundle install --deployment --without development test postgres
 
 # Initialise Database and Activate Advanced Features
 sudo -u git -H bundle exec rake gitlab:setup RAILS_ENV=production
-sudo -u git -H bundle exec rake db:migrate RAILS_ENV=production
 # Install Init Script
 sudo curl --output /etc/init.d/gitlab https://raw.github.com/gitlabhq/gitlab-recipes/5-0-stable/init.d/gitlab
 sudo chmod +x /etc/init.d/gitlab
