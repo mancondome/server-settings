@@ -8,23 +8,20 @@ sudo gem install bundler
 
 # Create a git user for Gitlab
 sudo adduser --disabled-login --gecos 'GitLab' git
-# Login as git
-sudo su git
 # Go to home directory
 cd /home/git
 # Clone gitlab shell
-git clone https://github.com/gitlabhq/gitlab-shell.git
+sudo -u git git clone https://github.com/gitlabhq/gitlab-shell.git
 cd gitlab-shell
 # switch to right version for v5.0
-git checkout v1.1.0
-git checkout -b v1.1.0
-cp config.yml.example config.yml
+sudo -u git git checkout v1.1.0
+sudo -u git git checkout -b v1.1.0
+sudo -u git cp config.yml.example config.yml
 # Edit config and replace gitlab_url
 # with something like 'http://domain.com/'
-emacs config.yml
+sudo -u git emacs config.yml
 # Do setup
-./bin/install
-logout
+sudo -u git ./bin/install
 
 
 # Install the database packages
@@ -32,17 +29,12 @@ sudo apt-get install -y mysql-server mysql-client libmysqlclient-dev
 # MySQL secure installation
 mysql_secure_installation
 # Password for gitlab
+echo -n "password for MySQL user \"root\"> "
+read MYSQL_ROOT_PASSWORD
 echo -n "password for MySQL user \"gitlab\"> "
-read MYSQL_PASSWORD
+read MYSQL_GITLAB_PASSWORD
 # Create a user and database for GitLab.
-mysql -uroot -p -e <<EOS
-	CREATE USER 'gitlab'@'localhost' IDENTIFIED BY '$MYSQL_PASSWORD';
-	CREATE DATABASE IF NOT EXISTS `gitlabhq_production` DEFAULT CHARACTER SET `utf8` COLLATE `utf8_unicode_ci`;
-	GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER ON `gitlabhq_production`.* TO 'gitlab'@'localhost';
-EOS
-# Try connecting to the new database with the new user
-sudo -u git -H mysql -u gitlab -p -D gitlabhq_production
-
+mysql -uroot --password=$MYSQL_ROOT_PASSWORD -e "CREATE DATABASE IF NOT EXISTS \`gitlabhq_production\` DEFAULT CHARACTER SET \`utf8\` COLLATE \`utf8_unicode_ci\`;GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER ON \`gitlabhq_production\`.* TO 'gitlab'@'localhost' IDENTIFIED BY '$MYSQL_GITLAB_PASSWORD';"
 
 cd /home/git
 # Clone GitLab repository
@@ -98,7 +90,7 @@ sudo service gitlab start
 
 
 # Nginx settings
-sudo apt-get install nginx
+sudo apt-get install -y nginx
 sudo curl --output /etc/nginx/sites-available/gitlab https://raw.github.com/gitlabhq/gitlab-recipes/5-0-stable/nginx/gitlab
 sudo ln -s /etc/nginx/sites-available/gitlab /etc/nginx/sites-enabled/gitlab
 sudo service nginx restart
