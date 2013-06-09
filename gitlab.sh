@@ -16,10 +16,19 @@ cd gitlab-shell
 # switch to right version for v5.0
 sudo -u git git checkout v1.1.0
 sudo -u git git checkout -b v1.1.0
-sudo -u git cp config.yml.example config.yml
-# Edit config and replace gitlab_url
-# with something like 'http://domain.com/'
-sudo -u git emacs config.yml
+cat <<EOF | sudo -u git tee config.yml > /dev/null
+# GitLab user. git by default
+user: git
+
+# Url to gitlab instance. Used for api calls
+gitlab_url: "http://`hostname -f`/"
+
+# Repositories path
+repos_path: "/home/git/repositories"
+
+# File used as authorized_keys for gitlab user
+auth_file: "/home/git/.ssh/authorized_keys"
+EOF
 # Do setup
 sudo -u git ./bin/install
 
