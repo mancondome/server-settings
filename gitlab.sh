@@ -123,13 +123,11 @@ upstream gitlab {
 }
 
 server {
-  listen `wget -q -O - ipcheck.ieserver.net`:80 default_server;
+  listen 443 default_server ssl;
   server_name `hostname -f`;
   root /home/git/gitlab/public;
 
   # individual nginx logs for this gitlab vhost
-  access_log  /var/log/nginx/gitlab_access.log;
-  access_log  /var/log/nginx/gitlab_access.log;
   access_log  /var/log/nginx/gitlab_access.log;
   error_log   /var/log/nginx/gitlab_error.log;
 
@@ -154,6 +152,25 @@ server {
   }
 }
 EOF
+
+cat <<EOF | sudo tee /etc/nginx/conf.d/ssl.conf > /dev/null
+ssl_session_cache    shared:SSL:10m;
+ssl_session_timeout  10m;
+ssl_certificate      /etc/nginx/certificates/`hostname`.crt;
+ssl_certificate_key  /etc/nginx/certificates/`hostname`.key;
+EOF
+
+sudo mkdir /etc/nginx/certificates
+openssl genrsa -des3 -out /etc/nginx/certificates/`hostname`.key 1024
+openssl req -new -key /etc/nginx/certificates/`hostname`.key -out /etc/nginx/certificates/`hostname`.csr
+cp /etc/nginx/certificates/`hostname`.key /etc/nginx/certificates/`hostname`.key.org
+openssl rsa -in /etc/nginx/certificates/`hostname`.key.org -out /etc/nginx/certificates/`hostname`.key
+openssl x509 -req -days 365 -in /etc/nginx/certificates/`hostname`.csr -signkey /etc/nginx/certificates/`hostname`.key -out /etc/nginx/certificates/`hostname`.crt
+sudo rm /etc/nginx/certificates/`hostname`.key.org /etc/nginx/certificates/`hostname`.csr
+sudo chmod -R go-rwx /etc/nginx/certificates/
+
+sudo ufw allow https/tcp
+sudo ufw reload
 
 # sudo curl --output /etc/nginx/sites-available/gitlab https://raw.github.com/gitlabhq/gitlab-recipes/5-0-stable/nginx/gitlab
 sudo ln -s /etc/nginx/sites-available/gitlab /etc/nginx/sites-enabled/gitlab
