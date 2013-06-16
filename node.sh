@@ -17,3 +17,4 @@ server {
   }
 }
 EOF
+sudo ln -s /etc/nginx/sites-available/node /etc/nginx/sites-enabled/node
