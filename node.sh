@@ -43,8 +43,12 @@ var httpd = require('http').createServer(function(request, response) {
 httpd.listen(3000);
 EOF
 
-cat <<EOF | sudo tee /etc/profile.d/node_init.sh > /dev/null
-(node /var/lib/node/ipcheck.js >> /var/log/node/ipcheck.log) 2>> /var/log/node/ipcheck_error.log &
+cat <<EOF | sudo tee /etc/rc.local > /dev/null
+#!/bin/sh -e
+#
+# rc.local
+#
+
+(sudo -u node node /var/lib/node/ipcheck.js >> /var/log/node/ipcheck.log) 2>> /var/log/node/ipcheck_error.log &
+chown node:node /var/log/node/*.log
 EOF
-sudo chown node:node /etc/profile.d/node_init.sh
-sudo chmod 4700 /etc/profile.d/node_init.sh
