@@ -1,11 +1,13 @@
 Overview
 ========
 
-サーバー構築用スクリプトを置く。
+サーバー構築用スクリプト
+
+Ubuntu専用。
 
 使用例。
 ```
-wget -q -O - https://raw.github.com/mancondome/server-settings/master/init.sh | sh
+curl -L https://raw.github.com/mancondome/server-settings/master/init.sh | bash
 ```
 
 * init.sh
